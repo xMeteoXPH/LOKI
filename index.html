@@ -601,11 +601,7 @@
                 
                 this.vx = (Math.random() - 0.5) * 0.2;
                 this.vy = (Math.random() - 0.5) * 0.2;
-                
-                // Larger particles for mobile
-                const isMobile = window.innerWidth <= 768;
-                this.size = isMobile ? 5 + Math.random() * 3 : 3 + Math.random() * 2;
-                
+                this.size = 3 + Math.random() * 2; // Same size for all devices
                 this.hue = 200 + Math.random() * 20; // Subtle blue-purple (200-220)
                 this.photoSrc = photoData.src;
                 this.note = photoData.note;
@@ -624,10 +620,10 @@
                 this.imgWidth = 0;
                 this.imgHeight = 0;
                 
-                // Calculate aspect ratio when loaded - larger on mobile
+                // Calculate aspect ratio when loaded - same size for all
                 this.img.onload = () => {
                     this.imgLoaded = true;
-                    const maxSize = isMobile ? 250 : 150; // Bigger photos on mobile
+                    const maxSize = 150; // Same size for all devices
                     const aspectRatio = this.img.width / this.img.height;
                     
                     if (aspectRatio > 1) {
@@ -758,9 +754,13 @@
                             ctx.shadowBlur = 0;
                         }
                         
-                        // Photo position with floating offset
-                        const photoX = this.x + this.floatOffsetX;
-                        const photoY = this.y + this.floatOffsetY;
+                        // Photo position with floating offset - keep within screen bounds
+                        let photoX = this.x + this.floatOffsetX;
+                        let photoY = this.y + this.floatOffsetY;
+                        
+                        // Clamp photo position to keep it fully visible
+                        photoX = Math.max(photoW / 2 + 10, Math.min(canvas.width - photoW / 2 - 10, photoX));
+                        photoY = Math.max(photoH / 2 + 10, Math.min(canvas.height - photoH / 2 - 10, photoY));
                         
                         // Draw photo with FULL 100% opacity - NO FADE!
                         ctx.globalAlpha = 1.0; // ALWAYS FULL OPACITY
@@ -790,24 +790,27 @@
                         // Draw sweet note beside the photo
                         if (this.revealProgress > 0.5) {
                             const noteOpacity = Math.min((this.revealProgress - 0.5) / 0.5, 1);
-                            const isMobile = window.innerWidth <= 768;
                             
-                            // Mobile: note appears BELOW photo, Desktop: note beside photo
+                            const noteWidth = 200;
+                            const noteHeight = 80;
+                            
+                            // Smart positioning: keep note within screen bounds
                             let noteX, noteY;
-                            const noteWidth = isMobile ? Math.min(280, canvas.width - 40) : 200;
-                            const noteHeight = isMobile ? 100 : 80;
                             
-                            if (isMobile) {
-                                // Below the photo on mobile
-                                noteX = photoX - noteWidth / 2;
-                                noteY = photoY + photoH / 2 + 40;
+                            // Try to place note to the right of photo
+                            if (photoX + photoW / 2 + 30 + noteWidth < canvas.width - 20) {
+                                // Right side has room
+                                noteX = photoX + photoW / 2 + 30;
+                            } else if (photoX - photoW / 2 - 30 - noteWidth > 20) {
+                                // Left side has room
+                                noteX = photoX - photoW / 2 - 30 - noteWidth;
                             } else {
-                                // Beside photo on desktop (right or left)
-                                noteX = photoX + photoW / 2 + 30 < canvas.width - 200 
-                                    ? photoX + photoW / 2 + 30 
-                                    : photoX - photoW / 2 - 230;
-                                noteY = photoY;
+                                // Not enough room on either side, center it
+                                noteX = Math.max(20, Math.min(canvas.width - noteWidth - 20, photoX - noteWidth / 2));
                             }
+                            
+                            // Keep note vertically centered with photo, but within bounds
+                            noteY = Math.max(noteHeight / 2 + 20, Math.min(canvas.height - noteHeight / 2 - 20, photoY));
                             
                             // Note background (semi-transparent with green glow)
                             ctx.globalAlpha = noteOpacity * 0.8;
@@ -821,39 +824,25 @@
                             
                             // Rounded rectangle for note
                             ctx.beginPath();
-                            if (isMobile) {
-                                // Centered below photo
-                                ctx.moveTo(noteX + cornerRadius, noteY);
-                                ctx.lineTo(noteX + noteWidth - cornerRadius, noteY);
-                                ctx.arcTo(noteX + noteWidth, noteY, noteX + noteWidth, noteY + cornerRadius, cornerRadius);
-                                ctx.lineTo(noteX + noteWidth, noteY + noteHeight - cornerRadius);
-                                ctx.arcTo(noteX + noteWidth, noteY + noteHeight, noteX + noteWidth - cornerRadius, noteY + noteHeight, cornerRadius);
-                                ctx.lineTo(noteX + cornerRadius, noteY + noteHeight);
-                                ctx.arcTo(noteX, noteY + noteHeight, noteX, noteY + noteHeight - cornerRadius, cornerRadius);
-                                ctx.lineTo(noteX, noteY + cornerRadius);
-                                ctx.arcTo(noteX, noteY, noteX + cornerRadius, noteY, cornerRadius);
-                            } else {
-                                // Beside photo on desktop
-                                ctx.moveTo(noteX + cornerRadius, noteY - noteHeight / 2);
-                                ctx.lineTo(noteX + noteWidth - cornerRadius, noteY - noteHeight / 2);
-                                ctx.arcTo(noteX + noteWidth, noteY - noteHeight / 2, noteX + noteWidth, noteY - noteHeight / 2 + cornerRadius, cornerRadius);
-                                ctx.lineTo(noteX + noteWidth, noteY + noteHeight / 2 - cornerRadius);
-                                ctx.arcTo(noteX + noteWidth, noteY + noteHeight / 2, noteX + noteWidth - cornerRadius, noteY + noteHeight / 2, cornerRadius);
-                                ctx.lineTo(noteX + cornerRadius, noteY + noteHeight / 2);
-                                ctx.arcTo(noteX, noteY + noteHeight / 2, noteX, noteY + noteHeight / 2 - cornerRadius, cornerRadius);
-                                ctx.lineTo(noteX, noteY - noteHeight / 2 + cornerRadius);
-                                ctx.arcTo(noteX, noteY - noteHeight / 2, noteX + cornerRadius, noteY - noteHeight / 2, cornerRadius);
-                            }
+                            ctx.moveTo(noteX + cornerRadius, noteY - noteHeight / 2);
+                            ctx.lineTo(noteX + noteWidth - cornerRadius, noteY - noteHeight / 2);
+                            ctx.arcTo(noteX + noteWidth, noteY - noteHeight / 2, noteX + noteWidth, noteY - noteHeight / 2 + cornerRadius, cornerRadius);
+                            ctx.lineTo(noteX + noteWidth, noteY + noteHeight / 2 - cornerRadius);
+                            ctx.arcTo(noteX + noteWidth, noteY + noteHeight / 2, noteX + noteWidth - cornerRadius, noteY + noteHeight / 2, cornerRadius);
+                            ctx.lineTo(noteX + cornerRadius, noteY + noteHeight / 2);
+                            ctx.arcTo(noteX, noteY + noteHeight / 2, noteX, noteY + noteHeight / 2 - cornerRadius, cornerRadius);
+                            ctx.lineTo(noteX, noteY - noteHeight / 2 + cornerRadius);
+                            ctx.arcTo(noteX, noteY - noteHeight / 2, noteX + cornerRadius, noteY - noteHeight / 2, cornerRadius);
                             ctx.closePath();
                             ctx.fill();
                             ctx.stroke();
                             
                             ctx.shadowBlur = 0;
                             
-                            // Note text - larger on mobile
+                            // Note text
                             ctx.globalAlpha = noteOpacity;
                             ctx.fillStyle = '#00ff88';
-                            ctx.font = isMobile ? '18px Montserrat, sans-serif' : '16px Montserrat, sans-serif';
+                            ctx.font = '16px Montserrat, sans-serif';
                             ctx.textAlign = 'center';
                             ctx.textBaseline = 'middle';
                             
@@ -875,11 +864,8 @@
                             lines.push(currentLine);
                             
                             // Draw each line
-                            const lineHeight = isMobile ? 24 : 20;
-                            const startY = isMobile 
-                                ? noteY + noteHeight / 2 - (lines.length - 1) * lineHeight / 2
-                                : noteY - (lines.length - 1) * lineHeight / 2;
-                            
+                            const lineHeight = 20;
+                            const startY = noteY - (lines.length - 1) * lineHeight / 2;
                             lines.forEach((line, i) => {
                                 ctx.fillText(line, noteX + noteWidth / 2, startY + i * lineHeight);
                             });
