@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Multiverse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            overflow: hidden;
+            background: #000;
+            color: #fff;
+        }
+
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(ellipse at center, #0d2626 0%, #000000 100%);
+            z-index: 1000;
+            cursor: pointer;
+            transition: opacity 1.5s ease-out;
+            overflow: hidden;
+        }
+
+        #startScreen canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        #startScreen > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        #startScreen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .title {
+            font-family: 'Cinzel', serif;
+            font-weight: 900;
+            font-size: 3.5em;
+            margin-bottom: 20px;
+            text-align: center;
+            background: linear-gradient(135deg, #00ff88, #00d4ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 3s infinite;
+            filter: drop-shadow(0 0 20px rgba(0, 255, 136, 0.6));
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.2em;
+            font-weight: 400;
+            color: #00d4ff;
+            margin-bottom: 40px;
+            opacity: 0.8;
+            text-align: center;
+            padding: 0 20px;
+            letter-spacing: 0.05em;
+        }
+
+        .tap-instruction {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.5em;
+            font-weight: 600;
+            padding: 20px 40px;
+            border: 2px solid #00ff88;
+            border-radius: 50px;
+            background: rgba(0, 255, 136, 0.1);
+            animation: pulse 2s infinite;
+            backdrop-filter: blur(10px);
+            letter-spacing: 0.05em;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { filter: drop-shadow(0 0 20px rgba(0, 255, 136, 0.6)); }
+            50% { filter: drop-shadow(0 0 40px rgba(0, 255, 136, 1)); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+            }
+            50% { 
+                transform: scale(1.05);
+                box-shadow: 0 0 40px rgba(0, 255, 136, 0.6);
+            }
+        }
+
+        #mainContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 2s ease-in;
+            overflow: hidden;
+        }
+
+        #mainContainer.visible {
+            opacity: 1;
+        }
+
+        #backgroundImage {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+            pointer-events: none; /* Don't block clicks! */
+        }
+
+        #photoGrid {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 1400px;
+            height: 85vh;
+            display: none; /* HIDE IT - not using grid anymore */
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            overflow-y: auto;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        #photoGrid::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #photoGrid::-webkit-scrollbar-track {
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 10px;
+        }
+
+        #photoGrid::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 136, 0.5);
+            border-radius: 10px;
+        }
+
+        .photo-card {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+            border: 2px solid rgba(0, 255, 136, 0.5);
+            animation: fadeInPhoto 0.8s ease-out forwards;
+            opacity: 0;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(5px);
+        }
+
+        @keyframes fadeInPhoto {
+            from {
+                opacity: 0;
+                transform: scale(0.8) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .photo-card:hover {
+            transform: scale(1.1) translateY(-5px);
+            box-shadow: 0 0 40px rgba(0, 255, 136, 0.8);
+            border-color: #00ff88;
+            z-index: 100;
+        }
+
+        .photo-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .photo-card:hover img {
+            transform: scale(1.1);
+        }
+
+        .photo-glow {
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #00ff88, #00d4ff, #00ff88);
+            border-radius: 10px;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            filter: blur(10px);
+            animation: rotateGlow 3s linear infinite;
+        }
+
+        @keyframes rotateGlow {
+            0% { filter: blur(10px) hue-rotate(0deg); }
+            100% { filter: blur(10px) hue-rotate(360deg); }
+        }
+
+        .photo-card:hover .photo-glow {
+            opacity: 0.8;
+        }
+
+        #photoModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            backdrop-filter: blur(20px);
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        #photoModal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            position: relative;
+            animation: modalZoom 0.4s ease-out;
+        }
+
+        @keyframes modalZoom {
+            from { 
+                transform: scale(0.7) rotateY(20deg);
+                opacity: 0;
+            }
+            to { 
+                transform: scale(1) rotateY(0deg);
+                opacity: 1;
+            }
+        }
+
+        .modal-content img {
+            max-width: 100%;
+            max-height: 85vh;
+            border-radius: 15px;
+            box-shadow: 0 0 80px rgba(0, 255, 136, 0.6);
+            border: 3px solid #00ff88;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: -50px;
+            right: 0;
+            font-size: 3em;
+            color: #00ff88;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.8);
+        }
+
+        .close-modal:hover {
+            transform: rotate(90deg) scale(1.2);
+            color: #00d4ff;
+        }
+
+        /* Particle effect overlay */
+        #particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100; /* Make sure it's on top! */
+            background: transparent;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .title { font-size: 2em; }
+            .subtitle { font-size: 1em; }
+            .tap-instruction { font-size: 1.2em; padding: 15px 30px; }
+            #photoGrid {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="startScreen">
+        <canvas id="startBranches"></canvas>
+        <h1 class="title">Our Multiverse</h1>
+        <p class="subtitle">Every moment with you is a timeline worth living</p>
+        <div class="tap-instruction">Tap to Begin Your Journey</div>
+        <audio id="startMusic" loop>
+            <source src="TVA First View - Natalie Holt - Topic (128k).mp3" type="audio/mpeg">
+        </audio>
+    </div>
+
+    <!-- Intro Video (plays after clicking start) -->
+    <video id="introVideo" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 2000; display: none; background: #000; opacity: 0; transition: opacity 1s ease-in-out;">
+        <source src="km_20261111_1080p_30f_20261111_181656.mp4" type="video/mp4">
+    </video>
+
+    <div id="mainContainer">
+        <img id="backgroundImage" src="12644272.png" alt="Loki Timeline Background">
+        <canvas id="particles"></canvas>
+        <div id="photoGrid"></div>
+        <audio id="mainMusic" loop>
+            <source src="Purpose Is Glorious (From Loki Season 2 - Vol. 2 (Episodes 4-6)ScoreAudio Only) - MarvelMusicVEVO (128k).mp3" type="audio/mpeg">
+        </audio>
+    </div>
+
+    <div id="photoModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <img id="modalImage" src="" alt="Memory">
+        </div>
+    </div>
+
+    <script>
+        // Photos with sweet notes for each memory
+        const photos = [
+            { src: '-6086782851543576535_121.jpg', note: 'I\'d choose you in every timeline.' },
+            { src: '-6181309017234714595_121.jpg', note: 'You\'re my favorite part of every day.' },
+            { src: '-6181309017234714613_121.jpg', note: 'My glorious purpose is loving you.' },
+            { src: '-6181352091461726581_121.jpg', note: 'Always you, in every universe.' },
+            { src: '-6183964805967229082_121.jpg', note: 'You\'re my favorite person, always.' },
+            { src: '-6183964805967229085_121.jpg', note: 'Our story is my favorite.' },
+            { src: '-6309923419231203356_121.jpg', note: 'I\'d find you in every timeline.' },
+            { src: 'IMG_20240319_171959.jpg', note: 'You\'re my little happy place.' },
+            { src: 'IMG_20240425_151304.jpg', note: 'I love doing life with you.' },
+            { src: 'IMG_20240425_151513.jpg', note: 'You\'re my favorite reality.' },
+            { src: 'IMG_20261027_150447.jpg', note: 'Every day, I choose you.' },
+            { src: 'Locket_1763465196493_44.jpg', note: 'You make my world brighter.' },
+            { src: 'Locket_1763465239045_64.jpg', note: 'Here\'s to our forever.' },
+            { src: 'Locket_1763465268566_2.jpg', note: 'You\'re my favorite hello.' },
+            { src: 'Locket_1763465283840_87.jpg', note: 'I love you across every universe.' },
+            { src: 'Locket_1763465291856_82.jpg', note: 'You\'re my sweetest blessing.' },
+            { src: 'Messenger_creation_2D13AB2B-5D3E-49BF-B9D8-0A2C495EDFE1.jpg', note: 'My heart is always with you.' },
+            { src: 'Messenger_creation_2D279313-474A-4623-B048-3EDD0721650C.jpg', note: 'You\'re my favorite part of this timeline.' },
+            { src: 'Messenger_creation_2F3A33FD-C612-47F6-9E32-B6682B5FEB03.jpg', note: 'I love our little world.' },
+            { src: 'Messenger_creation_323BD24B-F56C-4654-8226-22895215F139.jpg', note: 'You make everything feel special.' },
+            { src: 'Messenger_creation_56654415-0435-4B9D-93F3-847646F858DC.jpg', note: 'Sending you a TVA-sized hug!' },
+            { src: 'Messenger_creation_6055ECC6-FA64-4772-B62A-9772FAD0D930.jpg', note: 'You\'re my forever person.' },
+            { src: 'Messenger_creation_8434623A-23F8-4EC4-A3C1-15171D01FF62.jpg', note: 'I\'m happy we\'re in this timeline together.' },
+            { src: 'Messenger_creation_918E76A0-3C2F-4685-98A5-1FFD0853A3C6.jpg', note: 'I love you, my little variant.' },
+            { src: 'Messenger_creation_AB7DAB5F-2B0D-4AE6-9B28-4305A1F13490.jpg', note: 'You\'re my happy ending.' },
+            { src: 'Messenger_creation_C9F8E3D4-2EAB-4FFC-B5E3-B2A31F5AEA1E.jpg', note: 'Every moment with you matters.' },
+            { src: 'Messenger_creation_FB85E5E1-F354-4223-8680-766D78333059.jpg', note: 'You\'re always in my thoughts.' },
+            { src: 'received_1340828887628237.jpg', note: 'I hope you smile today.' },
+            { src: 'received_1448017916193292.jpg', note: 'My favorite place is with you.' },
+            { src: 'received_1457517728617650.jpg', note: 'I love you more each day.' },
+            { src: 'received_1655615271800029.jpg', note: 'Our love is my sacred timeline.' },
+            { src: 'received_1792139581412982.jpg', note: 'You\'re my favorite adventure.' },
+            { src: 'received_4289318904649651.jpg', note: 'I\'m always rooting for you.' },
+            { src: 'received_573681448164675.jpg', note: 'You make my heart happy.' },
+            { src: 'received_701976569510285.jpg', note: 'More memories with you, please!' },
+            { src: 'received_747833044926102.jpg', note: 'I\'ll keep choosing us.' },
+            { src: 'received_791464516567772.jpg', note: 'You\'re my favorite part of the story.' },
+            { src: 'received_882293637437311.jpg', note: 'Distance can\'t change how much I love you.' },
+            { src: 'received_894546931653811.jpg', note: 'Here\'s to us in every lifetime.' },
+            { src: 'received_971338964029809.jpg', note: 'I love you, endlessly.' }
+        ];
+
+        const startScreen = document.getElementById('startScreen');
+        const mainContainer = document.getElementById('mainContainer');
+        const photoGrid = document.getElementById('photoGrid');
+        const photoModal = document.getElementById('photoModal');
+        const modalImage = document.getElementById('modalImage');
+        const canvas = document.getElementById('particles');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Start screen branches animation
+        const startCanvas = document.getElementById('startBranches');
+        const startCtx = startCanvas.getContext('2d');
+        startCanvas.width = window.innerWidth;
+        startCanvas.height = window.innerHeight;
+
+        const startMusic = document.getElementById('startMusic');
+        const mainMusic = document.getElementById('mainMusic');
+        const introVideo = document.getElementById('introVideo');
+        let musicStarted = false;
+        
+        // Try to start music on any interaction with start screen
+        const tryStartMusic = () => {
+            if (!musicStarted) {
+                startMusic.play().then(() => {
+                    musicStarted = true;
+                    console.log('Music is now playing!');
+                }).catch(error => {
+                    console.log('Music blocked, try clicking:', error);
+                });
+            }
+        };
+        
+        // Try on mouse enter/move (user hovering over screen)
+        startScreen.addEventListener('mouseenter', tryStartMusic, { once: true });
+        startScreen.addEventListener('mousemove', tryStartMusic, { once: true });
+        startScreen.addEventListener('touchstart', tryStartMusic, { once: true });
+
+        // Dead branches with flowing green energy - WAVY like photo branches
+        class DeadBranch {
+            constructor(index, total) {
+                this.y = (startCanvas.height / (total + 1)) * (index + 1);
+                this.flowProgress = Math.random() * Math.PI * 2;
+                this.flowSpeed = 0.005 + Math.random() * 0.005;
+                this.waveOffset = Math.random() * 10;
+                this.waveHeight = 30 + Math.random() * 20;
+                this.segments = 60;
+                this.branchWaveTime = Math.random() * Math.PI * 2; // For branch undulation
+                this.branchWaveSpeed = 0.003 + Math.random() * 0.003; // Slow wave
+            }
+
+            update() {
+                this.flowProgress += this.flowSpeed;
+                this.branchWaveTime += this.branchWaveSpeed; // Slowly wave the branch itself
+            }
+
+            draw() {
+                const waveHeight = this.waveHeight;
+                const segments = this.segments;
+                
+                // Draw DARK dead branch with slow undulation
+                startCtx.strokeStyle = '#1a4d4d';
+                startCtx.lineWidth = 3;
+                startCtx.globalAlpha = 0.4;
+                startCtx.shadowBlur = 0;
+                
+                startCtx.beginPath();
+                for (let i = 0; i <= segments; i++) {
+                    const t = i / segments;
+                    const x = t * startCanvas.width;
+                    // Add slow undulation to the branch itself
+                    const wave = Math.sin(t * Math.PI * 2 + this.waveOffset + this.branchWaveTime * 0.5) * waveHeight * t;
+                    const y = this.y + wave;
+                    
+                    if (i === 0) {
+                        startCtx.moveTo(x, y);
+                    } else {
+                        startCtx.lineTo(x, y);
+                    }
+                }
+                startCtx.stroke();
+                
+                // Draw FLOWING GREEN energy (follows the waving branch)
+                startCtx.globalAlpha = 1;
+                startCtx.strokeStyle = '#00ff88';
+                startCtx.lineWidth = 2;
+                startCtx.shadowBlur = 15;
+                startCtx.shadowColor = '#00ff88';
+                
+                for (let i = 0; i <= segments; i++) {
+                    const t = i / segments;
+                    const flowWave = Math.sin(t * Math.PI * 2 - this.flowProgress);
+                    
+                    if (flowWave > 0.8) {
+                        const x = t * startCanvas.width;
+                        const wave = Math.sin(t * Math.PI * 2 + this.waveOffset + this.branchWaveTime * 0.5) * waveHeight * t;
+                        const y = this.y + wave;
+                        
+                        const intensity = (flowWave - 0.8) / 0.2;
+                        startCtx.globalAlpha = intensity * 0.4;
+                        
+                        const nextT = (i + 1) / segments;
+                        const nextX = nextT * startCanvas.width;
+                        const nextWave = Math.sin(nextT * Math.PI * 2 + this.waveOffset + this.branchWaveTime * 0.5) * waveHeight * nextT;
+                        const nextY = this.y + nextWave;
+                        
+                        startCtx.beginPath();
+                        startCtx.moveTo(x, y);
+                        startCtx.lineTo(nextX, nextY);
+                        startCtx.stroke();
+                    }
+                }
+                
+                startCtx.shadowBlur = 0;
+            }
+        }
+
+        const deadBranches = [];
+        for (let i = 0; i < 20; i++) {
+            deadBranches.push(new DeadBranch(i, 20));
+        }
+
+        // Draw dark branches ONCE (static)
+        function drawStaticBranches() {
+            startCtx.clearRect(0, 0, startCanvas.width, startCanvas.height);
+            deadBranches.forEach(branch => {
+                const waveHeight = 30 + Math.random() * 20;
+                const segments = 60;
+                
+                // Draw DARK dead branch (static)
+                startCtx.strokeStyle = '#1a4d4d';
+                startCtx.lineWidth = 3;
+                startCtx.globalAlpha = 0.4;
+                startCtx.shadowBlur = 0;
+                
+                startCtx.beginPath();
+                for (let i = 0; i <= segments; i++) {
+                    const t = i / segments;
+                    const x = t * startCanvas.width;
+                    const wave = Math.sin(t * Math.PI * 2 + branch.waveOffset) * waveHeight * t;
+                    const y = branch.y + wave;
+                    
+                    if (i === 0) {
+                        startCtx.moveTo(x, y);
+                    } else {
+                        startCtx.lineTo(x, y);
+                    }
+                }
+                startCtx.stroke();
+            });
+        }
+
+        drawStaticBranches(); // Draw once
+
+        function animateStartBranches() {
+            // Clean clear every frame
+            startCtx.clearRect(0, 0, startCanvas.width, startCanvas.height);
+            
+            // Update and draw branches with flow
+            deadBranches.forEach(branch => {
+                branch.update();
+                branch.draw(); // This draws both dark branch AND green flow
+            });
+
+            if (startScreen.style.display !== 'none') {
+                requestAnimationFrame(animateStartBranches);
+            }
+        }
+
+        animateStartBranches();
+
+        // Particle system
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.size = Math.random() * 2 + 0.5;
+                this.hue = 150 + Math.random() * 30;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = `hsla(${this.hue}, 100%, 50%, 0.6)`;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = `hsl(${this.hue}, 100%, 50%)`;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        // Special Photo Particle - like leaves on the tree
+        class PhotoParticle {
+            constructor(photoData, index) {
+                // Position around the tree (center area)
+                const angle = (Math.PI * 2 / photos.length) * index;
+                const radius = 150 + Math.random() * 250;
+                this.x = canvas.width / 2 + Math.cos(angle) * radius;
+                this.y = canvas.height / 2 + Math.sin(angle) * radius;
+                
+                this.vx = (Math.random() - 0.5) * 0.2;
+                this.vy = (Math.random() - 0.5) * 0.2;
+                this.size = 3 + Math.random() * 2; // Same size as regular particles
+                this.hue = 200 + Math.random() * 20; // Subtle blue-purple (200-220)
+                this.photoSrc = photoData.src;
+                this.note = photoData.note;
+                this.index = index;
+                this.clicked = false;
+                this.revealProgress = 0;
+                this.pulse = Math.random() * Math.PI * 2;
+                this.branchAnimTime = 0; // For animating the branch
+                this.floatOffsetX = 0; // Photo floating motion
+                this.floatOffsetY = 0;
+                
+                // Preload image
+                this.img = new Image();
+                this.img.src = photoData.src;
+                this.imgLoaded = false;
+                this.imgWidth = 0;
+                this.imgHeight = 0;
+                
+                // Calculate aspect ratio when loaded
+                this.img.onload = () => {
+                    this.imgLoaded = true;
+                    const maxSize = 150;
+                    const aspectRatio = this.img.width / this.img.height;
+                    
+                    if (aspectRatio > 1) {
+                        // Landscape
+                        this.imgWidth = maxSize;
+                        this.imgHeight = maxSize / aspectRatio;
+                    } else {
+                        // Portrait or square
+                        this.imgHeight = maxSize;
+                        this.imgWidth = maxSize * aspectRatio;
+                    }
+                };
+            }
+
+            update() {
+                if (!this.clicked) {
+                    // Float gently
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    this.pulse += 0.03;
+
+                    // Bounce off edges
+                    if (this.x < 50 || this.x > canvas.width - 50) this.vx *= -1;
+                    if (this.y < 50 || this.y > canvas.height - 50) this.vy *= -1;
+                } else {
+                    // Reveal animation
+                    if (this.revealProgress < 1) {
+                        this.revealProgress += 0.02;
+                    }
+                    // Animate the branch slowly
+                    this.branchAnimTime += 0.01; // Much slower
+                    
+                    // Make photo float/sway with the branch
+                    this.floatOffsetX = Math.sin(this.branchAnimTime) * 3;
+                    this.floatOffsetY = Math.cos(this.branchAnimTime * 1.5) * 2;
+                }
+            }
+
+            draw() {
+                const pulseSize = Math.sin(this.pulse) * 0.5;
+                const currentSize = this.size + pulseSize;
+
+                if (!this.clicked) {
+                    // Draw as subtle glowing particle
+                    // Glow brighter on hover
+                    const hoverGlow = this.hovered ? 1.5 : 1;
+                    const hoverSize = this.hovered ? currentSize * 1.3 : currentSize;
+                    
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, hoverSize, 0, Math.PI * 2);
+                    ctx.fillStyle = `hsla(${this.hue}, 100%, 60%, ${0.7 * hoverGlow})`;
+                    ctx.shadowBlur = 10 * hoverGlow;
+                    ctx.shadowColor = `hsl(${this.hue}, 100%, 60%)`;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                } else {
+                    // Reveal photo
+                    const scale = this.revealProgress;
+                    
+                    if (this.img.complete && this.imgLoaded) {
+                        ctx.save();
+                        
+                        // Use calculated dimensions based on aspect ratio
+                        // Add hover scale effect
+                        const hoverScale = this.hovered ? 1.1 : 1;
+                        const photoW = this.imgWidth * scale * hoverScale;
+                        const photoH = this.imgHeight * scale * hoverScale;
+                        
+                        // Draw long wavy timeline branch - appears FROM the picture outward
+                        if (this.revealProgress > 0.3) {
+                            const branchProgress = Math.min((this.revealProgress - 0.3) / 0.7, 1);
+                            
+                            ctx.globalAlpha = branchProgress * 0.5;
+                            ctx.strokeStyle = '#00ff88';
+                            ctx.lineWidth = 3;
+                            ctx.shadowBlur = 15;
+                            ctx.shadowColor = '#00ff88';
+                            
+                            // Photo position with floating offset
+                            const photoX = this.x + this.floatOffsetX;
+                            const photoY = this.y + this.floatOffsetY;
+                            
+                            // Draw wavy line FROM center (photo) outward to both sides
+                            ctx.beginPath();
+                            
+                            const waveHeight = 40;
+                            const segments = 40;
+                            
+                            // Left branch - from photo to left edge
+                            const leftDistance = this.x * branchProgress;
+                            for (let i = 0; i <= segments; i++) {
+                                const t = i / segments;
+                                const x = photoX - (leftDistance * t);
+                                const wave = Math.sin(t * Math.PI * 2 + this.branchAnimTime) * waveHeight * t;
+                                const y = photoY + wave;
+                                
+                                if (i === 0) {
+                                    ctx.moveTo(x, y);
+                                } else {
+                                    ctx.lineTo(x, y);
+                                }
+                            }
+                            
+                            // Right branch - from photo to right edge
+                            ctx.moveTo(photoX, photoY);
+                            const rightDistance = (canvas.width - this.x) * branchProgress;
+                            for (let i = 0; i <= segments; i++) {
+                                const t = i / segments;
+                                const x = photoX + (rightDistance * t);
+                                const wave = Math.sin(t * Math.PI * 2 + this.branchAnimTime) * waveHeight * t;
+                                const y = photoY + wave;
+                                
+                                if (i === 0) {
+                                    ctx.moveTo(x, y);
+                                } else {
+                                    ctx.lineTo(x, y);
+                                }
+                            }
+                            
+                            ctx.stroke();
+                            
+                            // Outer glow
+                            ctx.lineWidth = 8;
+                            ctx.shadowBlur = 25;
+                            ctx.globalAlpha = branchProgress * 0.2;
+                            ctx.stroke();
+                            
+                            ctx.shadowBlur = 0;
+                        }
+                        
+                        // Photo position with floating offset
+                        const photoX = this.x + this.floatOffsetX;
+                        const photoY = this.y + this.floatOffsetY;
+                        
+                        // Draw photo with FULL 100% opacity - NO FADE!
+                        ctx.globalAlpha = 1.0; // ALWAYS FULL OPACITY
+                        
+                        ctx.drawImage(
+                            this.img,
+                            photoX - photoW / 2,
+                            photoY - photoH / 2,
+                            photoW,
+                            photoH
+                        );
+                        
+                        // Glowing GREEN border
+                        ctx.strokeStyle = '#00ff88';
+                        ctx.lineWidth = 4;
+                        ctx.shadowBlur = 20;
+                        ctx.shadowColor = '#00ff88';
+                        ctx.strokeRect(
+                            photoX - photoW / 2,
+                            photoY - photoH / 2,
+                            photoW,
+                            photoH
+                        );
+                        
+                        ctx.shadowBlur = 0;
+                        
+                        // Draw sweet note beside the photo
+                        if (this.revealProgress > 0.5) {
+                            const noteOpacity = Math.min((this.revealProgress - 0.5) / 0.5, 1);
+                            
+                            // Position note to the right of photo (or left if too close to edge)
+                            const noteX = photoX + photoW / 2 + 30 < canvas.width - 200 
+                                ? photoX + photoW / 2 + 30 
+                                : photoX - photoW / 2 - 230;
+                            const noteY = photoY;
+                            
+                            // Note background (semi-transparent with green glow)
+                            ctx.globalAlpha = noteOpacity * 0.8;
+                            ctx.fillStyle = 'rgba(0, 20, 20, 0.9)';
+                            ctx.strokeStyle = '#00ff88';
+                            ctx.lineWidth = 2;
+                            ctx.shadowBlur = 15;
+                            ctx.shadowColor = '#00ff88';
+                            
+                            const noteWidth = 200;
+                            const noteHeight = 80;
+                            const cornerRadius = 10;
+                            
+                            // Rounded rectangle for note
+                            ctx.beginPath();
+                            ctx.moveTo(noteX + cornerRadius, noteY - noteHeight / 2);
+                            ctx.lineTo(noteX + noteWidth - cornerRadius, noteY - noteHeight / 2);
+                            ctx.arcTo(noteX + noteWidth, noteY - noteHeight / 2, noteX + noteWidth, noteY - noteHeight / 2 + cornerRadius, cornerRadius);
+                            ctx.lineTo(noteX + noteWidth, noteY + noteHeight / 2 - cornerRadius);
+                            ctx.arcTo(noteX + noteWidth, noteY + noteHeight / 2, noteX + noteWidth - cornerRadius, noteY + noteHeight / 2, cornerRadius);
+                            ctx.lineTo(noteX + cornerRadius, noteY + noteHeight / 2);
+                            ctx.arcTo(noteX, noteY + noteHeight / 2, noteX, noteY + noteHeight / 2 - cornerRadius, cornerRadius);
+                            ctx.lineTo(noteX, noteY - noteHeight / 2 + cornerRadius);
+                            ctx.arcTo(noteX, noteY - noteHeight / 2, noteX + cornerRadius, noteY - noteHeight / 2, cornerRadius);
+                            ctx.closePath();
+                            ctx.fill();
+                            ctx.stroke();
+                            
+                            ctx.shadowBlur = 0;
+                            
+                            // Note text
+                            ctx.globalAlpha = noteOpacity;
+                            ctx.fillStyle = '#00ff88';
+                            ctx.font = '16px Montserrat, sans-serif';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            
+                            // Word wrap the note text
+                            const words = this.note.split(' ');
+                            let lines = [];
+                            let currentLine = words[0];
+                            
+                            for (let i = 1; i < words.length; i++) {
+                                const testLine = currentLine + ' ' + words[i];
+                                const metrics = ctx.measureText(testLine);
+                                if (metrics.width > noteWidth - 20) {
+                                    lines.push(currentLine);
+                                    currentLine = words[i];
+                                } else {
+                                    currentLine = testLine;
+                                }
+                            }
+                            lines.push(currentLine);
+                            
+                            // Draw each line
+                            const lineHeight = 20;
+                            const startY = noteY - (lines.length - 1) * lineHeight / 2;
+                            lines.forEach((line, i) => {
+                                ctx.fillText(line, noteX + noteWidth / 2, startY + i * lineHeight);
+                            });
+                        }
+                        
+                        ctx.restore();
+                    }
+                }
+            }
+
+            isClicked(mx, my) {
+                const dx = mx - this.x;
+                const dy = my - this.y;
+                return Math.sqrt(dx * dx + dy * dy) < 15; // Bigger click area
+            }
+
+            isHovered(mx, my) {
+                if (!this.clicked) {
+                    // Check hover on particle
+                    const dx = mx - this.x;
+                    const dy = my - this.y;
+                    return Math.sqrt(dx * dx + dy * dy) < 20;
+                } else {
+                    // Check hover on photo
+                    const photoX = this.x + this.floatOffsetX;
+                    const photoY = this.y + this.floatOffsetY;
+                    const photoW = this.imgWidth;
+                    const photoH = this.imgHeight;
+                    
+                    return mx > photoX - photoW/2 && mx < photoX + photoW/2 &&
+                           my > photoY - photoH/2 && my < photoY + photoH/2;
+                }
+            }
+        }
+
+        const particles = [];
+        const photoParticles = [];
+        
+        // Regular particles spread everywhere (background stars)
+        for (let i = 0; i < 80; i++) {
+            particles.push(new Particle());
+        }
+        
+        // Extra particles concentrated around the tree (center area)
+        for (let i = 0; i < 100; i++) {
+            const particle = new Particle();
+            // Concentrate particles in center 60% of screen where tree is
+            particle.x = canvas.width * 0.2 + Math.random() * canvas.width * 0.6;
+            particle.y = canvas.height * 0.2 + Math.random() * canvas.height * 0.6;
+            particle.vx *= 0.3; // Slower movement
+            particle.vy *= 0.3;
+            particle.size = Math.random() * 3 + 1; // Slightly bigger
+            particles.push(particle);
+        }
+
+        // Create 39 special photo particles (like leaves on the tree)
+        photos.forEach((photo, index) => {
+            photoParticles.push(new PhotoParticle(photo, index));
+        });
+
+        function animateParticles() {
+            // Don't clear - let background show through
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw background particles
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+
+            // Draw photo particles (on top)
+            photoParticles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+
+            requestAnimationFrame(animateParticles);
+        }
+
+        // Start journey
+        startScreen.addEventListener('click', () => {
+            // Stop music
+            if (musicStarted) {
+                startMusic.pause();
+            }
+            
+            // Fade out start screen
+            startScreen.style.transition = 'opacity 1s ease-out';
+            startScreen.style.opacity = '0';
+            
+            // After fade out, show video with fade in
+            setTimeout(() => {
+                startScreen.style.display = 'none';
+                
+                // Show video and start playing
+                introVideo.style.display = 'block';
+                introVideo.play().catch(error => {
+                    console.log('Video play error:', error);
+                });
+                
+                // Fade in video
+                setTimeout(() => {
+                    introVideo.style.opacity = '1';
+                }, 50);
+            }, 1000); // Wait for start screen fade out
+            
+            // When video ends, fade out and show main container
+            introVideo.onended = () => {
+                // Fade out video
+                introVideo.style.opacity = '0';
+                
+                setTimeout(() => {
+                    introVideo.style.display = 'none';
+                    mainContainer.classList.add('visible');
+                    
+                    // Start playing main music
+                    mainMusic.play().then(() => {
+                        console.log('Main music playing!');
+                    }).catch(error => {
+                        console.log('Main music blocked:', error);
+                    });
+                    
+                    loadPhotos();
+                    animateParticles();
+                    setupClickHandler();
+                }, 1000); // Wait for video fade out
+            };
+            
+            // Optional: Allow skipping video by clicking
+            let videoSkipped = false;
+            introVideo.addEventListener('click', () => {
+                if (!videoSkipped) {
+                    videoSkipped = true;
+                    introVideo.pause();
+                    
+                    // Fade out video
+                    introVideo.style.opacity = '0';
+                    
+                    setTimeout(() => {
+                        introVideo.style.display = 'none';
+                        mainContainer.classList.add('visible');
+                        
+                        // Start playing main music
+                        mainMusic.play().then(() => {
+                            console.log('Main music playing!');
+                        }).catch(error => {
+                            console.log('Main music blocked:', error);
+                        });
+                        
+                        loadPhotos();
+                        animateParticles();
+                        setupClickHandler();
+                    }, 1000); // Wait for fade out
+                }
+            });
+        });
+
+        // Setup click handler for photo particles
+        function setupClickHandler() {
+            console.log('Setting up click handler!');
+            console.log('Canvas element:', canvas);
+            console.log('Photo particles count:', photoParticles.length);
+            
+            // Mouse move for hover effects
+            canvas.addEventListener('mousemove', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const mx = e.clientX - rect.left;
+                const my = e.clientY - rect.top;
+
+                let isHoveringAny = false;
+                photoParticles.forEach(particle => {
+                    particle.hovered = particle.isHovered(mx, my);
+                    if (particle.hovered) {
+                        isHoveringAny = true;
+                    }
+                });
+
+                // Change cursor
+                canvas.style.cursor = isHoveringAny ? 'pointer' : 'default';
+            });
+            
+            // Single click - reveal photo
+            canvas.addEventListener('click', (e) => {
+                console.log('CANVAS CLICKED!');
+                const rect = canvas.getBoundingClientRect();
+                const mx = e.clientX - rect.left;
+                const my = e.clientY - rect.top;
+
+                console.log('Click at:', mx, my);
+                console.log('Photo particles:', photoParticles.length);
+
+                let clickedAny = false;
+                photoParticles.forEach((particle, i) => {
+                    const distance = Math.sqrt((mx - particle.x) ** 2 + (my - particle.y) ** 2);
+                    
+                    if (!particle.clicked && particle.isClicked(mx, my)) {
+                        // Close all other photos first
+                        photoParticles.forEach(p => {
+                            p.clicked = false;
+                            p.revealProgress = 0;
+                        });
+                        
+                        // Open this one
+                        particle.clicked = true;
+                        clickedAny = true;
+                        console.log('Clicked particle!', particle.index);
+                    }
+                });
+
+                if (!clickedAny) {
+                    console.log('No particle clicked');
+                }
+            });
+
+            // Double click - open fullscreen modal
+            canvas.addEventListener('dblclick', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const mx = e.clientX - rect.left;
+                const my = e.clientY - rect.top;
+
+                photoParticles.forEach(particle => {
+                    if (particle.clicked && particle.isHovered(mx, my)) {
+                        modalImage.src = particle.photoSrc;
+                        photoModal.classList.add('active');
+                    }
+                });
+            });
+
+            // Also add touch support for mobile
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const touch = e.touches[0];
+                const mx = touch.clientX - rect.left;
+                const my = touch.clientY - rect.top;
+
+                photoParticles.forEach(particle => {
+                    if (!particle.clicked && particle.isClicked(mx, my)) {
+                        particle.clicked = true;
+                    }
+                });
+            });
+        }
+
+        // Load photos into grid
+        function loadPhotos() {
+            // DISABLED - Working on background first
+            return;
+            photos.forEach((photo, index) => {
+                setTimeout(() => {
+                    const card = document.createElement('div');
+                    card.className = 'photo-card';
+                    card.style.animationDelay = `${index * 0.05}s`;
+
+                    const glow = document.createElement('div');
+                    glow.className = 'photo-glow';
+
+                    const img = document.createElement('img');
+                    img.src = photo;
+                    img.alt = `Memory ${index + 1}`;
+                    img.loading = 'lazy';
+
+                    card.appendChild(glow);
+                    card.appendChild(img);
+
+                    card.addEventListener('click', () => {
+                        modalImage.src = photo;
+                        photoModal.classList.add('active');
+                    });
+
+                    photoGrid.appendChild(card);
+                }, index * 50);
+            });
+        }
+
+        // Close modal
+        document.querySelector('.close-modal').addEventListener('click', () => {
+            photoModal.classList.remove('active');
+        });
+
+        photoModal.addEventListener('click', (e) => {
+            if (e.target === photoModal) {
+                photoModal.classList.remove('active');
+            }
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
