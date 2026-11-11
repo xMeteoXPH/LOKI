@@ -1058,17 +1058,19 @@
                 console.log('Photo particles:', photoParticles.length);
 
                 let clickedAny = false;
+                
+                // Check if clicking on any particle (including already opened ones)
                 photoParticles.forEach((particle, i) => {
-                    const distance = Math.sqrt((mx - particle.x) ** 2 + (my - particle.y) ** 2);
-                    
-                    if (!particle.clicked && particle.isClicked(mx, my)) {
+                    if (particle.isClicked(mx, my)) {
                         // Close all other photos first
                         photoParticles.forEach(p => {
-                            p.clicked = false;
-                            p.revealProgress = 0;
+                            if (p !== particle) {
+                                p.clicked = false;
+                                p.revealProgress = 0;
+                            }
                         });
                         
-                        // Open this one
+                        // Toggle this one
                         particle.clicked = true;
                         clickedAny = true;
                         console.log('Clicked particle!', particle.index);
@@ -1102,9 +1104,23 @@
                 const mx = touch.clientX - rect.left;
                 const my = touch.clientY - rect.top;
 
+                let touchedAny = false;
+                
+                // Check if touching any particle
                 photoParticles.forEach(particle => {
-                    if (!particle.clicked && particle.isClicked(mx, my)) {
+                    if (particle.isClicked(mx, my)) {
+                        // Close all other photos first
+                        photoParticles.forEach(p => {
+                            if (p !== particle) {
+                                p.clicked = false;
+                                p.revealProgress = 0;
+                            }
+                        });
+                        
+                        // Open this one
                         particle.clicked = true;
+                        touchedAny = true;
+                        console.log('Touched particle!', particle.index);
                     }
                 });
             });
