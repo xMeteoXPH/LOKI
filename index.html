@@ -339,9 +339,6 @@
         <h1 class="title">Our Multiverse</h1>
         <p class="subtitle">Every moment with you is a timeline worth living</p>
         <div class="tap-instruction">Tap to Begin Your Journey</div>
-        <audio id="startMusic" loop>
-            <source src="TVA First View - Natalie Holt - Topic (128k).mp3" type="audio/mpeg">
-        </audio>
     </div>
 
     <!-- Intro Video (plays after clicking start) -->
@@ -427,27 +424,8 @@
         startCanvas.width = window.innerWidth;
         startCanvas.height = window.innerHeight;
 
-        const startMusic = document.getElementById('startMusic');
         const mainMusic = document.getElementById('mainMusic');
         const introVideo = document.getElementById('introVideo');
-        let musicStarted = false;
-        
-        // Try to start music on any interaction with start screen
-        const tryStartMusic = () => {
-            if (!musicStarted) {
-                startMusic.play().then(() => {
-                    musicStarted = true;
-                    console.log('Music is now playing!');
-                }).catch(error => {
-                    console.log('Music blocked, try clicking:', error);
-                });
-            }
-        };
-        
-        // Try on mouse enter/move (user hovering over screen)
-        startScreen.addEventListener('mouseenter', tryStartMusic, { once: true });
-        startScreen.addEventListener('mousemove', tryStartMusic, { once: true });
-        startScreen.addEventListener('touchstart', tryStartMusic, { once: true });
 
         // Dead branches with flowing green energy - WAVY like photo branches
         class DeadBranch {
@@ -987,11 +965,6 @@
 
         // Start journey
         startScreen.addEventListener('click', () => {
-            // Stop music
-            if (musicStarted) {
-                startMusic.pause();
-            }
-            
             // Fade out start screen
             startScreen.style.transition = 'opacity 1s ease-out';
             startScreen.style.opacity = '0';
